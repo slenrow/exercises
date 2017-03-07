@@ -11,7 +11,7 @@ module.exports = function debounce(cb, delay) {
     let timeout;
 
     // Return a function that will maintain a scoped reference to a function without calling it.
-    return () => {
+    return function() {
         /*
          * Create a function that will reset a preexisting timeout id assigned to `timeout` and call the passed callback.
          * This is the function that will be called if and only if the delay time is reached before debounce is called
@@ -19,8 +19,12 @@ module.exports = function debounce(cb, delay) {
          */
         const resetAndCall = () => {
             timeout = null;
-            // Call the cb with `arguments` passed in via currying
-            cb(arguments);
+
+            /*
+             * Call the cb with `arguments` passed in via currying. Must use apply here as arguments is
+             * as an array like object. ES6 arrow functions pass parent context which is used as our context in apply.
+             */
+            cb.apply(this, arguments);
         };
 
         // Clear the stored timeout id assigned to `timeout`
