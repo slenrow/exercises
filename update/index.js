@@ -14,5 +14,59 @@
  */
 
 module.exports = function update(state, options) {
+    /*
+     * Assign the keys of the options parameter to a `commands` object. This will be used
+     * to determine the process the function will execute in the swtich statement.
+     */
+    const commands = Object.keys(options);
 
+    // Create enum for easier, cleaner access.
+    const commandsEnum = {
+        PUSH: '$push',
+        UNSHIFT: '$unshift',
+        SPLICE: '$splice',
+        SET: '$set',
+        MERGE: '$merge',
+        APPLY: '$apply',
+    };
+
+    /*
+     * Make a copy of state and assign it to `nextState`. This is the first step toward immutability.
+     * Using the spread operator here copies the enumerable properties of the `state` object into the `nextState` object.
+     * As we recursively iterate down the `state` object, this approach will ultimately create a deep copy of all
+     * unchanged aspects of the object.
+     */
+    const nextState = {
+        ...state,
+    };
+
+    /*
+     * This switch statement will execute the proper command. Using a switch as it's much cleaner than
+     * a long conditional block.
+     */
+    switch (commands) {
+        case commandsEnum.SET:
+            /*
+             * This return should assign the value of `$set` in the options object to the `nextState`.
+             * Since the function is being called recursively, this return assigns the value of `nextState[key]`
+             * to this new value.
+             */
+            return options[commandsEnum.SET];
+        default:
+            break;
+    }
+
+    /*
+     * This is the engine. Check the keys of `options`. If the key doesn't exist as a command in the `commandsEnum`,
+     * this means the command is more deeply nested. Thus, `update` must dive a level deeper into the object by calling
+     * itself with `state` and `options` by accessing the value of the current key in each object
+     * and assigning the return value to `nextState`.
+     */
+    commands.forEach(key => {
+        if (!commandsEnum[key]) {
+            nextState[key] = update(state[key], options[key]);
+        }
+    });
+
+    return nextState;
 }
