@@ -14,9 +14,23 @@ module.exports = function throttlePromises(limit, actions) {
     /*
      * If there are still actions to be executed, increment `index` and promisify the action.
      * This method will only be called iteratively by the outer scope a maximum of `limit` times.
+     * Once the concurrency limit is reached, this method will only be called recursively once an
+     * running promise resolves.
      */
     const createPromise = () => {
+        if (index < actions.length) {
+            const currentIndex = index;
+            const currentAction = actions[currentIndex];
+            ++index;
 
+            /*
+             * This is where the magic happens. When a promisified action resolves, place the result of the action
+             * at the `currentIndex` it was called. Then call `createPromise` again. This ensures the action's result
+             * is at the correct index (matching its index in the `actions` array), while also ensuring a new promisified
+             * actions isn't created until an active promise finishes and one of the 'threads' becomes available.
+             */
+            return Promise.resolve(currentAction()).then(result => results[currentIndex] = result).then(createPromise);
+        }
     }
 
     // Initalize array to store the returned promises
