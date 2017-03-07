@@ -27,4 +27,7 @@ module.exports = function throttlePromises(limit, actions) {
         let currentPromise = createPromise();
         promises.push(currentPromise);
     }
+
+    // Return a promise once all of the promisified actions have resolved.
+    return Promise.all(promises).then(() => results);
 }
