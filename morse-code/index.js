@@ -54,6 +54,7 @@ function createTimeouts(timeouts, timeouter, toggle, cb) {
 		const timeout = timeouts.shift();
 	    timeouter(() => createTimeouts(timeouts, timeouter, toggle, cb), timeout);
     } else {
+    	// Call the done callback if the `timeouts` array is depleted
     	cb();
     }
 }
