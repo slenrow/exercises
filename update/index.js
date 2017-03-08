@@ -16,42 +16,40 @@
 module.exports = function update(state, options) {
     /*
      * Assign the keys of the options parameter to a `commands` object. This will be used
-     * to determine the process the function will execute in the swtich statement.
+     * to determine the process the function will execute in the swtich statement OR (in the event it's object props)
+     * it will be used to determing a recursion event.
      */
     const commands = Object.keys(options);
 
     // Create enum for easier, cleaner access.
     const commandsEnum = {
-        PUSH: '$push',
-        UNSHIFT: '$unshift',
-        SPLICE: '$splice',
-        SET: '$set',
-        MERGE: '$merge',
-        APPLY: '$apply',
+        $push: '$push',
+        $unshift: '$unshift',
+        $splice: '$splice',
+        $set: '$set',
+        $merge: '$merge',
+        $apply: '$apply',
     };
 
-    /*
-     * Make a copy of state and assign it to `nextState`. This is the first step toward immutability.
-     * Using the spread operator here copies the enumerable properties of the `state` object into the `nextState` object.
-     * As we recursively iterate down the `state` object, this approach will ultimately create a deep copy of all
-     * unchanged aspects of the object.
-     */
-    const nextState = {
-        ...state,
-    };
+    // Make a copy of state and assign it to `nextState`. This is the first step toward immutability.
+    const nextState = getCopy(state);
 
     /*
      * This switch statement will execute the proper command. Using a switch as it's much cleaner than
      * a long conditional block.
      */
-    switch (commands) {
-        case commandsEnum.SET:
+    switch (commands[0]) {
+        case commandsEnum.$set:
             /*
              * This return should assign the value of `$set` in the options object to the `nextState`.
              * Since the function is being called recursively, this return assigns the value of `nextState[key]`
              * to this new value.
              */
-            return options[commandsEnum.SET];
+            return options[commandsEnum.$set];
+        case commandsEnum.$push:
+            // Pushes each item onto `nextState`
+            options[commandsEnum.$push].forEach(el => nextState.push(el));
+            break;
         default:
             break;
     }
@@ -69,4 +67,17 @@ module.exports = function update(state, options) {
     });
 
     return nextState;
+}
+
+function getCopy(data) {
+    /*
+     * If the data passed in is an array, clone the array with slice to avoid mutation, otherwise return an object.
+     * Using the spread operator here copies the enumerable properties of the `state` object into the `nextState` object.
+     * As we recursively iterate down the `state` object, this approach will ultimately create a deep copy of all
+     * unchanged aspects of the object.
+     */
+    if (Array.isArray(data)) return data.slice();
+    return {
+        ...data,
+    };
 }
