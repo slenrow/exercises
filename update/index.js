@@ -50,6 +50,23 @@ module.exports = function update(state, options) {
             // Pushes each item onto `nextState`
             options[commandsEnum.$push].forEach(el => nextState.push(el));
             break;
+        case commandsEnum.$unshift:
+            // Unshift each item onto `nextState`
+            options[commandsEnum.$unshift].forEach(el => nextState.unshift(el));
+            break;
+        case commandsEnum.$splice:
+            // Splice items into `nextState`
+            options[commandsEnum.$splice].forEach(el => nextState.splice.apply(nextState, el));
+            break;
+        case commandsEnum.$merge:
+            // Merge keys into `nextState`
+            return {
+                ...nextState,
+                ...options[commandsEnum.$merge],
+            };
+        case commandsEnum.$apply:
+            // Apply a function to the current value
+            return options[commandsEnum.$apply](nextState);
         default:
             break;
     }
@@ -61,7 +78,7 @@ module.exports = function update(state, options) {
      * and assigning the return value to `nextState`.
      */
     commands.forEach(key => {
-        if (!commandsEnum[key]) {
+        if (!commandsEnum.hasOwnProperty(key)) {
             nextState[key] = update(state[key], options[key]);
         }
     });
@@ -71,13 +88,12 @@ module.exports = function update(state, options) {
 
 function getCopy(data) {
     /*
-     * If the data passed in is an array, clone the array with slice to avoid mutation, otherwise return an object.
-     * Using the spread operator here copies the enumerable properties of the `state` object into the `nextState` object.
+     * If the data passed in is an array, clone the array with slice to avoid mutation, otherwise return a cloned object
+     * using the spread operator which copies the enumerable properties of the `state` object into the `nextState` object.
      * As we recursively iterate down the `state` object, this approach will ultimately create a deep copy of all
-     * unchanged aspects of the object.
+     * unchanged aspects of the object. If neither, return the data as is.
      */
     if (Array.isArray(data)) return data.slice();
-    return {
-        ...data,
-    };
+    if (typeof data === 'object') return { ...data };
+    return data;
 }
